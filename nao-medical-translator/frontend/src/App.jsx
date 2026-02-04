@@ -165,7 +165,7 @@ export default function App() {
                  N
                </div>
                <div className="hidden sm:block">
-                  <h1 className="font-bold text-lg tracking-tight text-gray-900 dark:text-white leading-none">NaoTrans</h1>
+                  <h1 className="font-bold text-lg tracking-tight text-gray-900 dark:text-white leading-none">NaoTranslate</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`w-1.5 h-1.5 rounded-full ${isProcessing ? 'bg-yellow-500 animate-pulse' : 'bg-emerald-500'}`}></span>
                     <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Live</span>
