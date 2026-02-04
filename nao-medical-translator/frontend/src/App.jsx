@@ -57,9 +57,20 @@ export default function App() {
     "Hindi", "Spanish", "French", "German", 
     "Chinese", "Japanese", "Arabic", "Portuguese", "Russian"
   ];
-
-  // --- LOGIC ---
-  useEffect(() => { fetchHistory(); }, []);
+=
+  useEffect(() => { 
+   =
+    const initSession = async () => {
+      try {
+        await axios.delete(`${API_URL}/clear`);
+        setMessages([]);
+      } catch (err) {
+        console.error("Failed to clear history:", err);
+      }
+    };
+    initSession();
+  }, []);
+  
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const fetchHistory = async () => {
