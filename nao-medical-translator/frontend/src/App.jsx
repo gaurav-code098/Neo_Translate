@@ -24,11 +24,11 @@ const HighlightText = ({ text, highlight }) => {
 };
 
 const AudioPlayer = ({ src, isDoctor }) => (
-  <div className={`mt-3 mb-1 flex items-center gap-3 p-2 rounded-xl border transition-all ${isDoctor ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-black/5 border-black/5 dark:bg-black/20 dark:border-white/5 hover:bg-black/10 dark:hover:bg-black/30'}`}>
-    <div className={`p-2 rounded-full shadow-sm ${isDoctor ? 'bg-white/20 text-white' : 'bg-white dark:bg-white/10 text-gray-700 dark:text-white'}`}>
-      <Play size={14} fill="currentColor"/>
+  <div className={`mt-3 mb-1 flex items-center gap-3 p-2 rounded-xl border transition-all w-full max-w-[240px] ${isDoctor ? 'bg-white/10 border-white/10 hover:bg-white/20' : 'bg-black/5 border-black/5 dark:bg-black/20 dark:border-white/5 hover:bg-black/10 dark:hover:bg-black/30'}`}>
+    <div className={`p-2 rounded-full shadow-sm shrink-0 ${isDoctor ? 'bg-white/20 text-white' : 'bg-white dark:bg-white/10 text-gray-700 dark:text-white'}`}>
+      <Play size={12} fill="currentColor"/>
     </div>
-    <audio controls src={src} className="w-full h-8 opacity-90" style={{ filter: isDoctor ? 'invert(1)' : 'none' }} />
+    <audio controls src={src} className="h-8 w-full min-w-[140px] opacity-90" style={{ filter: isDoctor ? 'invert(1)' : 'none' }} />
   </div>
 );
 
@@ -57,20 +57,21 @@ export default function App() {
     "Hindi", "Spanish", "French", "German", 
     "Chinese", "Japanese", "Arabic", "Portuguese", "Russian"
   ];
-=
+
+  // --- LOGIC ---
   useEffect(() => { 
-   =
+    // Automatically wipe history on page load (Refresh)
     const initSession = async () => {
       try {
         await axios.delete(`${API_URL}/clear`);
-        setMessages([]);
+        setMessages([]); // Clear local state
       } catch (err) {
         console.error("Failed to clear history:", err);
       }
     };
     initSession();
   }, []);
-  
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const fetchHistory = async () => {
@@ -93,7 +94,11 @@ export default function App() {
     finally { setIsProcessing(false); }
   };
 
-  const startRecording = async () => {
+  // --- AUDIO RECORDING HANDLERS ---
+  const startRecording = async (e) => {
+    if(e && e.cancelable) e.preventDefault();
+    if(e && e.stopPropagation) e.stopPropagation();
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -102,10 +107,15 @@ export default function App() {
       mediaRecorderRef.current.onstop = handleAudioStop;
       mediaRecorderRef.current.start();
       setIsRecording(true);
-    } catch (err) { alert("Microphone blocked"); }
+    } catch (err) { 
+      alert("Microphone access denied."); 
+    }
   };
 
-  const stopRecording = () => {
+  const stopRecording = (e) => {
+    if(e && e.cancelable) e.preventDefault();
+    if(e && e.stopPropagation) e.stopPropagation();
+
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -143,7 +153,7 @@ export default function App() {
     <div className="dark">
       <div className="flex h-screen w-full overflow-hidden bg-[#fcfcfc] dark:bg-[#0d1117] text-gray-800 dark:text-gray-200 font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
         
-        {/* --- MAIN CHAT AREA (Full Width) --- */}
+        {/* --- MAIN CHAT AREA --- */}
         <main className="flex-1 flex flex-col min-w-0 bg-[#f8fafc] dark:bg-[#0d1117] relative">
           
           {/* Header */}
@@ -163,33 +173,21 @@ export default function App() {
                </div>
             </div>
 
-            {/* Center Controls: Role & Language */}
+            {/* Center Controls */}
             <div className="flex items-center gap-2 sm:gap-3 bg-gray-100 dark:bg-[#0d1117] p-1 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden max-w-full">
+              {/* Role Switcher */}
               <div className="flex bg-white dark:bg-[#21262d] rounded-lg p-0.5 sm:p-1 shadow-sm shrink-0">
-                <button 
-                  onClick={() => setRole('doctor')}
-                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wide transition-all ${
-                      role === 'doctor' 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
+                <button onClick={() => setRole('doctor')} className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wide transition-all ${role === 'doctor' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                   <Stethoscope size={14} className="shrink-0" /> <span className="hidden xs:inline">Dr</span>
                 </button>
-                <button 
-                  onClick={() => setRole('patient')}
-                  className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wide transition-all ${
-                      role === 'patient' 
-                      ? 'bg-emerald-600 text-white shadow-md' 
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
+                <button onClick={() => setRole('patient')} className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wide transition-all ${role === 'patient' ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                   <User size={14} className="shrink-0" /> <span className="hidden xs:inline">Pt</span>
                 </button>
               </div>
 
               <div className="w-px h-6 bg-gray-300 dark:bg-gray-700 mx-0.5 shrink-0"></div>
 
+              {/* Language Dropdown */}
               <div className="relative flex items-center group">
                 <Globe size={14} className="text-gray-400 absolute left-2 pointer-events-none" />
                 <select 
@@ -197,39 +195,21 @@ export default function App() {
                   onChange={(e) => setPatientLang(e.target.value)}
                   className="pl-7 pr-7 py-1.5 bg-white dark:bg-[#21262d] border border-transparent dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-lg text-xs font-bold uppercase text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 cursor-pointer outline-none appearance-none transition-all shadow-sm w-24 sm:w-32"
                 >
-                  {languages.map(lang => <option key={lang} value={lang}>{lang}</option>)}
+                  {languages.map(lang => <option key={lang} value={lang} className="bg-white dark:bg-[#21262d] text-gray-900 dark:text-white">{lang}</option>)}
                 </select>
-                <ChevronDown size={10} className="text-gray-400 absolute right-2 pointer-events-none group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                <ChevronDown size={10} className="text-gray-400 absolute right-2 pointer-events-none" />
               </div>
             </div>
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              {/* Search Bar */}
               <div className={`relative transition-all duration-300 ${showSearch ? 'w-24 sm:w-48 opacity-100 scale-100' : 'w-0 opacity-0 scale-95'} overflow-hidden`}>
-                 <input 
-                    className="w-full bg-gray-100 dark:bg-[#0d1117] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-full focus:ring-blue-500 focus:border-blue-500 pl-3 p-2 placeholder-gray-500 dark:placeholder-gray-600 shadow-inner" 
-                    placeholder="Search..." 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                 <input className="w-full bg-gray-100 dark:bg-[#0d1117] border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-full pl-3 p-2" placeholder="Search..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}/>
               </div>
+              <button onClick={() => setShowSearch(!showSearch)} className={`p-2.5 rounded-full transition-all duration-200 ${showSearch ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'}`}><Search size={18} /></button>
               
-              <button 
-                onClick={() => setShowSearch(!showSearch)}
-                className={`p-2.5 rounded-full transition-all duration-200 ${showSearch ? 'bg-blue-100 text-blue-600 ring-2 ring-blue-200' : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400'}`}
-              >
-                <Search size={18} />
-              </button>
-
-              {/* REPORT BUTTON - VISIBLE ON MOBILE */}
-              <button 
-                onClick={() => setShowReportModal(true)}
-                className="lg:hidden p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-all"
-              >
-                <FileText size={18} />
-              </button>
+              {/* Mobile Report Button */}
+              <button onClick={() => setShowReportModal(true)} className="lg:hidden p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-all"><FileText size={18} /></button>
             </div>
           </header>
 
@@ -237,7 +217,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             <div className="flex justify-center mb-6">
                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 bg-gray-200 dark:bg-[#161b22] px-4 py-1.5 rounded-full border border-gray-300 dark:border-gray-800 shadow-sm">
-                   Session ID: #8291 • {new Date().toLocaleDateString()}
+                   Session Started
                </span>
             </div>
 
@@ -279,10 +259,6 @@ export default function App() {
                                     <HighlightText text={msg.original_text} highlight={searchQuery} />
                                 </p>
                             </div>
-                            
-                            <span className="absolute bottom-2 right-3 text-[9px] opacity-40 font-mono">
-                                {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            </span>
                         </div>
                     </div>
                 );
@@ -293,12 +269,14 @@ export default function App() {
           {/* Footer Input */}
           <footer className="bg-white/95 dark:bg-[#1f2937]/95 backdrop-blur border-t border-gray-200 dark:border-gray-800 p-3 sm:p-4 z-30">
             <div className="max-w-4xl mx-auto w-full flex items-center gap-3">
+               
                <button 
                  onMouseDown={startRecording}
                  onMouseUp={stopRecording}
                  onTouchStart={startRecording}
                  onTouchEnd={stopRecording}
-                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-md ${
+                 onContextMenu={(e) => e.preventDefault()}
+                 className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-md select-none touch-manipulation ${
                     isRecording 
                     ? 'bg-red-500 text-white animate-pulse ring-4 ring-red-500/20 scale-110' 
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 active:scale-95'
@@ -347,7 +325,6 @@ export default function App() {
            </div>
 
            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Desktop Summary Content */}
               <SummaryContent summary={summary} handleDownloadPDF={handleDownloadPDF} />
            </div>
 
@@ -366,7 +343,6 @@ export default function App() {
           <div className="lg:hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
              <div className="bg-white dark:bg-[#161b22] w-full sm:w-[400px] h-[85vh] sm:h-auto rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10">
                 
-                {/* Modal Header */}
                 <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-white dark:bg-[#161b22]">
                    <div className="flex items-center gap-2">
                      <FileText className="text-blue-500" size={20}/>
@@ -377,12 +353,10 @@ export default function App() {
                    </button>
                 </div>
 
-                {/* Modal Body */}
                 <div className="flex-1 overflow-y-auto p-5 bg-[#f8fafc] dark:bg-[#0d1117]">
                    <SummaryContent summary={summary} handleDownloadPDF={handleDownloadPDF} />
                 </div>
 
-                {/* Modal Footer */}
                 <div className="p-5 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#161b22]">
                   <button 
                     onClick={handleGenerateSummary}
@@ -400,7 +374,7 @@ export default function App() {
   );
 }
 
-// Extracted Component for re-use in both Sidebar (Desktop) and Modal (Mobile)
+// Extracted Component for re-use
 const SummaryContent = ({ summary, handleDownloadPDF }) => (
   <>
     <div>
